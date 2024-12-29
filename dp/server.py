@@ -26,7 +26,7 @@ class PlanningHandler(tornado.web.RequestHandler):
         env = Environment(data["grid"], move_prob=move_prob)
         if data["plan"] == "value":
             planner: Planner = ValueIterationPlanner(env)
-        elif data["policy"] == "policy":
+        elif data["plan"] == "policy":
             planner = PolicyIterationPlanner(env)
         result: StateValueList2d = planner.plan()
         planner.log.append(result)
