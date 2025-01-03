@@ -41,7 +41,7 @@ class ValueIterationPlanner(Planner):
         super().__init__(env)
 
     # estimate state value function V(s)
-    def plan(self, gamma: float =0.9, threshold: float =0.001) -> StateValueList2d:
+    def plan(self, gamma: float =0.9, threshold: float =0.0001) -> StateValueList2d:
         self.initialize()
         V: StateValueFn = {s: 0 for s in self.env.states}
 
@@ -101,13 +101,14 @@ class PolicyIterationPlanner(Planner):
                 V[s] = sum(v_cands)  # V_{i+1}(s) = sum_{a} pi(a|s) sum_{s'} T(s'|s,a) * ( R(s) + gamma * V_{i}(s') )
 
                 delta = max(delta, abs(V[s] - cur_V))  # max | V_{i+1}(s) - V_{i}(s) |
+                print(delta)
             if delta < threshold:
                 break
 
         return V
 
     # estimate state value function V(s) with action value function Q(a)
-    def plan(self, gamma: float =0.9, threshold: float =0.001) -> StateValueList2d:
+    def plan(self, gamma: float =0.9, threshold: float =0.0001) -> StateValueList2d:
         self.initialize()
 
         while True:
@@ -124,12 +125,13 @@ class PolicyIterationPlanner(Planner):
                         Q[s, a] += T * (R + gamma * V[s_])  # T(s'|s,a) * ( R(s) + gamma * V(s') )
 
                 best_action: Action = max(Q, key=Q.get)[1]  # type: ignore  # argmax_{a} Q(s,a)
+                cur_best_action: Action = max(self.policy[s], key=self.policy[s].get)  # type: ignore
                 for a in self.policy[s]:
                     self.policy[s][a] = int(a == best_action)
 
-                max_policy_action: Action = max(self.policy[s], key=self.policy[s].get)  # type: ignore
-                update_stable |= (max_policy_action == best_action)
+                update_stable &= (best_action == cur_best_action)
             if update_stable:
                 break
 
+        print(self.log)
         return self.format_V(V)
